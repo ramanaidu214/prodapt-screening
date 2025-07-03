@@ -3,6 +3,7 @@ package com.example.demo.controller;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -29,5 +30,36 @@ class DemoControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
-    // add your test cases here
+    @ParameterizedTest
+    @DisplayName("Remove first and last characters for various valid inputs")
+    @CsvSource({
+            "country,ountr",
+            "person,erso",
+            "xyz,y",
+            "123%qwerty+,23%qwerty",
+            "#$%^&,$%^",
+            "123456,2345"
+    })
+    void testRemoveFirstAndLastCharacters(String input, String expectedOutput) throws Exception {
+        mockMvc.perform(get("/remove").param("inputStr", input))
+                .andExpect(status().isOk())
+                .andExpect(content().string(expectedOutput));
+    }
+
+    @ParameterizedTest
+    @DisplayName("Return empty string for two-character strings")
+    @ValueSource(strings = {"ab", "bc", "xy", "12", "@#"})
+    void testTwoCharacterStrings(String input) throws Exception {
+        mockMvc.perform(get("/remove").param("inputStr", input))
+                .andExpect(status().isOk())
+                .andExpect(content().string(""));
+    }
+
+    @ParameterizedTest
+    @DisplayName("Return 400 Bad Request for invalid short strings")
+    @ValueSource(strings = {"", "a", "1", "@"})
+    void testInvalidShortStrings(String input) throws Exception {
+        mockMvc.perform(get("/remove").param("inputStr", input))
+                .andExpect(status().isBadRequest());
+    }
 }
